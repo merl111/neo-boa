@@ -177,10 +177,26 @@ class Module(object):
 
         self._extra_instr = []
         new_method_blks = []
-        for blk in self.cfg:
+        has_annotation = False 
+        block_count = 0;
+        # for blk in self.cfg:
+        while block_count < len(self.cfg):
+            blk = self.cfg[block_count]
             type = get_block_type(blk)
+            method = ()
+            if type == BlockType.ABI_ANNOTATION:
+                has_annotation = True;
+                block_count = block_count + 1
+                next_blk = self.cfg[block_count]
+                method = (blk, next_blk)
+                blk = next_blk
+                type = get_block_type(blk)
+            else:
+                has_annotation = False;
+                method = (None, blk)
+
             if type == BlockType.MAKE_FUNCTION:
-                new_method_blks.append(blk)
+                new_method_blks.append(method)
             elif type == BlockType.IMPORT_ITEM:
                 new_module = Module.ImportFromBlock(blk, self.path)
                 if new_module:
@@ -200,10 +216,11 @@ class Module(object):
                 pass
             elif type == BlockType.APPCALL_REG:
                 self.app_call_registrations.append(BoaAppcall(blk))
+            block_count = block_count + 1;
 
         for m in new_method_blks:
 
-            new_method = BoaMethod(self, m, self.module_name, self._extra_instr)
+            new_method = BoaMethod(self, m[1], m[0], self.module_name, self._extra_instr)
 
             if not self.has_method(new_method.full_name):
                 self.methods.append(new_method)
@@ -515,11 +532,10 @@ class Module(object):
             function = {
                 'name': method,
                 'parameters': params,
-                'returnType': types['return']
+                'returntype': types['return']
             }
 
             functions.append(function)
-            print()
 
         json_data = json.dumps(data, indent=4)
         return json_data

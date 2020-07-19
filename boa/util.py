@@ -15,6 +15,7 @@ class BlockType():
     ACTION_REG = 7
     APPCALL_REG = 8
     UNKNOWN = 9
+    ABI_ANNOTATION = 10
 
 
 def get_block_type(block):
@@ -28,6 +29,10 @@ def get_block_type(block):
             if default != BlockType.UNKNOWN:
                 return default
             return BlockType.APPCALL_REG
+        elif instr.opcode == pyop.LOAD_NAME and instr.arg in ('abi_entry_point', 'abi_method'):
+            if default != BlockType.UNKNOWN:
+                return default
+            return BlockType.ABI_ANNOTATION
         elif instr.opcode in [pyop.IMPORT_FROM, pyop.IMPORT_NAME, pyop.IMPORT_STAR]:
             if default != BlockType.UNKNOWN:
                 return default
